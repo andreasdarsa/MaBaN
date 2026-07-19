@@ -95,3 +95,28 @@ class RecommendationResult:
     statistics: RecommendationStatistics
     execution_time: float
     recommendations: pd.DataFrame
+
+
+@dataclass(frozen=True)
+class InsightParameters:
+    top_n: int
+
+
+@dataclass(frozen=True)
+class InsightStatistics:
+    num_frequent_itemsets: int
+    num_rules: int
+    num_unique_items: int
+    avg_rule_confidence: float | None
+    avg_rule_lift: float | None
+
+
+@dataclass
+class InsightsResult:
+    parameters: InsightParameters
+    statistics: InsightStatistics
+    execution_time: float
+    top_items: pd.DataFrame
+    top_itemsets: pd.DataFrame
+    top_rules: pd.DataFrame
+    item_role_summary: pd.DataFrame
