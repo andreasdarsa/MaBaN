@@ -5,23 +5,22 @@ from .common import DatasetSummaryResponse
 from pydantic import BaseModel, Field
 
 from app.core.enums import (
-    DatasetFormat,
     MiningAlgorithm,
     RuleMetric,
 )
 
 
 class TransactionInput(BaseModel):
-    transaction_id: str
-    items: list[str] = Field(min_length=1)
+    transaction_id: str = Field(min_length=1, examples=["T001"])
+    items: list[str] = Field(min_length=1, examples=[["milk", "bread", "butter"]])
 
 
 class AnalysisRequest(BaseModel):
     transactions: list[TransactionInput] = Field(
-        min_length=1,
-    )
+        min_length=2,
+    ) # min length is 2. If it was 1 it would not be validated at core level (now it get rejected by pydantic schema)
 
-    dataset_format: DatasetFormat = DatasetFormat.BASKET
+    # Dataset format was removed. It will be declared through the service
 
     algorithm: MiningAlgorithm = MiningAlgorithm.APRIORI
 

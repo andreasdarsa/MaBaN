@@ -10,21 +10,26 @@ from app.core.rules import generate_association_rules
 from app.schemas.analysis import AnalysisRequest
 
 
-def transactions_to_dataframe(
+def transactions_to_long_dataframe(
     request: AnalysisRequest,
 ) -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "transaction_id": [
-                transaction.transaction_id
-                for transaction in request.transactions
-            ],
-            "items": [
-                transaction.items
-                for transaction in request.transactions
-            ],
-        }
+    records: list[dict[str, str]] = []
+
+    for transaction in request.transactions:
+        for item in transaction.items:
+            records.append(
+                {
+                    "transaction_id": transaction.transaction_id,
+                    "item": item,
+                }
+            )
+
+    return pd.DataFrame.from_records(
+        records,
+        columns=["transaction_id", "item"],
     )
+# API accepts transactions as {"transaction_id":..., "items":...}, therefore we should focus on converting
+# transactions list to long dataset format
 
 
 def serialize_collection(value: Any) -> Any:
@@ -47,7 +52,7 @@ def dataframe_to_records(
             serialize_collection
         )
 
-    serialized = serialized.where(
+    serialized = serialized.astype(object).where(
         pd.notna(serialized),
         None,
     )
@@ -58,13 +63,13 @@ def dataframe_to_records(
 def run_analysis(
     request: AnalysisRequest,
 ) -> dict[str, Any]:
-    dataframe = transactions_to_dataframe(request)
+    dataframe = transactions_to_long_dataframe(request)
 
     preprocessing_result = preprocess_dataset(
-        dataframe=dataframe,
-        dataset_format=DatasetFormat.BASKET,
-        transaction_column="transaction_id",
-        basket_column="items",
+        df=dataframe,
+        dataset_format=DatasetFormat.LONG,  # no need to adapt core, service is used for that
+        transaction_col="transaction_id",
+        item_col="items",
     )
 
     mining_result = mine_patterns(
