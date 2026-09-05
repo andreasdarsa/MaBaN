@@ -59,6 +59,17 @@ def run_association_rules(
     metric: RuleMetric,
     min_threshold: float,
 ) -> pd.DataFrame:
+    if frequent_itemsets.empty:
+        return pd.DataFrame(
+            columns=[
+                "antecedents",
+                "consequents",
+                "support",
+                "confidence",
+                "lift",
+            ]
+        )
+
     return association_rules(
         frequent_itemsets,
         metric=metric.value,

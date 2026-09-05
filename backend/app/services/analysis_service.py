@@ -69,7 +69,7 @@ def run_analysis(
         df=dataframe,
         dataset_format=DatasetFormat.LONG,  # no need to adapt core, service is used for that
         transaction_col="transaction_id",
-        item_col="items",
+        item_col="item",
     )
 
     mining_result = mine_patterns(
@@ -104,14 +104,13 @@ def run_analysis(
             ),
         },
         "mining_statistics": {
-            "num_transactions": (
-                mining_result.statistics.num_transactions
-            ),
-            "num_items": (
-                mining_result.statistics.num_items
-            ),
+            "num_transactions": mining_result.statistics.num_transactions,
+            "num_items": mining_result.statistics.num_items,
             "num_frequent_itemsets": (
                 mining_result.statistics.num_frequent_itemsets
+            ),
+            "largest_itemset_size": (
+                mining_result.statistics.largest_itemset_size
             ),
         },
         "mining_execution_time": (

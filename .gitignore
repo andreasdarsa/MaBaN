@@ -7,3 +7,4 @@
 /.pytest_cache/
 ./.pytest_cache/
 /.idea/
+*.pyc

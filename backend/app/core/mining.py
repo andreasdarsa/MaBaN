@@ -81,10 +81,20 @@ def generate_mining_statistics(
     encoded_df: pd.DataFrame,
     frequent_itemsets: pd.DataFrame,
 ) -> MiningStatistics:
+
+    largest_itemset_size = (
+        frequent_itemsets["itemsets"]
+        .apply(len)
+        .max()
+        if not frequent_itemsets.empty
+        else 0
+    )
+
     return MiningStatistics(
         num_transactions=len(encoded_df),
         num_items=len(encoded_df.columns),
         num_frequent_itemsets=len(frequent_itemsets),
+        largest_itemset_size=largest_itemset_size,
     )
 
 
