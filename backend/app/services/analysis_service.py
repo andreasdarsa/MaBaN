@@ -2,7 +2,7 @@ from typing import Any
 
 import pandas as pd
 
-from app.core.enums import DatasetFormat
+from app.core.enums import DatasetFormat, RuleMetric, MiningAlgorithm
 from app.core.insights import generate_insights
 from app.core.mining import mine_patterns
 from app.core.preprocessing import preprocess_dataset
@@ -65,30 +65,55 @@ def run_analysis(
 ) -> dict[str, Any]:
     dataframe = transactions_to_long_dataframe(request)
 
+    return run_analysis_pipeline(
+        dataframe=dataframe,
+        dataset_format=DatasetFormat.LONG,
+        transaction_col="transaction_id",
+        item_col="item",
+        algorithm=request.algorithm,
+        min_support=request.min_support,
+        max_len=request.max_len,
+        rule_metric=request.rule_metric,
+        rule_threshold=request.rule_threshold,
+        top_n=request.top_n,
+    )
+
+def run_analysis_pipeline(
+    dataframe: pd.DataFrame,
+    dataset_format: DatasetFormat,
+    transaction_col: str,
+    item_col: str | None,
+    algorithm: MiningAlgorithm,
+    min_support: float,
+    max_len: int | None,
+    rule_metric: RuleMetric,
+    rule_threshold: float,
+    top_n: int,
+) -> dict[str, Any]:
     preprocessing_result = preprocess_dataset(
         df=dataframe,
         dataset_format=DatasetFormat.LONG,  # no need to adapt core, service is used for that
         transaction_col="transaction_id",
         item_col="item",
     )
-
+    
     mining_result = mine_patterns(
         encoded_df=preprocessing_result.encoded_df,
-        algorithm=request.algorithm,
-        min_support=request.min_support,
-        max_len=request.max_len,
+        algorithm=algorithm,
+        min_support=min_support,
+        max_len=max_len,
     )
-
+    
     rule_result = generate_association_rules(
         frequent_itemsets=mining_result.frequent_itemsets,
-        metric=request.rule_metric,
-        min_threshold=request.rule_threshold,
+        metric=rule_metric,
+        min_threshold=rule_threshold,
     )
 
     insights_result = generate_insights(
         frequent_itemsets=mining_result.frequent_itemsets,
         rules=rule_result.rules,
-        top_n=request.top_n,
+        top_n=top_n,
     )
 
     return {
