@@ -1,86 +1,209 @@
-import streamlit as st
 import pandas as pd
-from backend.app.core.preprocessing import preprocess_dataset
+import streamlit as st
+
+from bootstrap import PROJECT_ROOT
+from api_client import (
+    APIClientError,
+    get_api_client,
+)
+
 
 st.title("Upload Dataset")
 
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+st.write(
+    "Upload a CSV transaction dataset and configure its structure."
+)
 
-if uploaded_file is not None:
+
+uploaded_file = st.file_uploader(
+    "Upload CSV file",
+    type=["csv"],
+)
+
+
+if uploaded_file is None:
+    st.info("Choose a CSV file to continue.")
+    st.stop()
+
+
+try:
     df = pd.read_csv(uploaded_file)
 
-    st.subheader("Dataset Preview")
-    st.dataframe(df.head())
+except Exception as exc:
+    st.error(
+        f"Could not read the CSV file: {exc}"
+    )
+    st.stop()
 
-    st.subheader("Dataset Structure")
-    st.write(f"Rows: {df.shape[0]}")
-    st.write(f"Columns: {df.shape[1]}")
-    st.write(list(df.columns))
 
-    dataset_type = st.radio(
-        "Select dataset type",
-        options=["long", "basket"],
-        format_func=lambda x: "Long / invoice-item" if x == "long" else "Basket per row"
+if df.empty:
+    st.error(
+        "The uploaded CSV file is empty."
+    )
+    st.stop()
+
+
+st.success(
+    f"Dataset loaded: {uploaded_file.name}"
+)
+
+
+st.subheader("Dataset Preview")
+
+st.dataframe(
+    df.head(10),
+    use_container_width=True,
+)
+
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.metric(
+        "Rows",
+        len(df),
     )
 
-    column_mapping = {"dataset_type": dataset_type}
+with col2:
+    st.metric(
+        "Columns",
+        len(df.columns),
+    )
 
-    if dataset_type == "long":
-        transaction_col = st.selectbox(
-            "Transaction column",
-            options=df.columns
+
+st.subheader("Dataset Structure")
+
+
+dataset_type = st.radio(
+    "Dataset type",
+    options=[
+        "long",
+        "basket",
+    ],
+    format_func=lambda value: (
+        "Long / invoice-item"
+        if value == "long"
+        else "Basket per row"
+    ),
+    horizontal=True,
+)
+
+
+columns = df.columns.tolist()
+
+
+transaction_col = st.selectbox(
+    "Transaction / basket ID column",
+    options=columns,
+)
+
+
+if dataset_type == "long":
+
+    item_col = st.selectbox(
+        "Item column",
+        options=columns,
+    )
+
+    valid_config = (
+        transaction_col != item_col
+    )
+
+    basket_item_cols = None
+
+else:
+
+    item_col = None
+
+    st.caption(
+        "Select the columns containing product names."
+    )
+
+    basket_item_cols = st.multiselect(
+        "Item columns",
+        options=[
+            column
+            for column in columns
+            if column != transaction_col
+        ],
+    )
+
+    valid_config = bool(
+        basket_item_cols
+    )
+
+    if not basket_item_cols:
+        st.warning(
+            "Select at least one item column."
         )
 
-        item_col = st.selectbox(
-            "Item column",
-            options=df.columns
-        )
 
-        column_mapping.update({
-            "transaction_col": transaction_col,
-            "item_col": item_col,
-            "basket_item_cols": None
-        })
+st.divider()
 
-    else:
-        basket_item_cols = st.multiselect(
-            "Item columns",
-            options=df.columns
-        )
 
-        transaction_col_option = st.selectbox(
-            "Optional transaction/id column",
-            options=["None"] + list(df.columns)
-        )
+if st.button(
+    "Connect Dataset",
+    type="primary",
+    disabled=not valid_config,
+):
 
-        transaction_col = (
-            None if transaction_col_option == "None"
-            else transaction_col_option
-        )
+    client = get_api_client()
 
-        column_mapping.update({
-            "transaction_col": transaction_col,
-            "item_col": None,
-            "basket_item_cols": basket_item_cols
-        })
-
-    if st.button("Save dataset configuration"):
-        st.session_state["raw_dataset"] = df
-        st.session_state["column_mapping"] = column_mapping
-
-        st.success("Dataset configuration saved.")
-        st.json(column_mapping)
-
-if st.button("Test preprocessing"):
     try:
-        result = preprocess_dataset(
-            df=df,
-            **column_mapping
+
+        upload_response = (
+            client.upload_dataset(
+                file_bytes=uploaded_file.getvalue(),
+                filename=uploaded_file.name,
+                dataset_format=dataset_type,
+                transaction_col=transaction_col,
+                item_col=item_col,
+            )
         )
 
-        st.success("Preprocessing completed.")
-        st.write(result["summary"])
-        st.dataframe(result["encoded_df"].head())
+    except APIClientError as exc:
 
-    except ValueError as e:
-        st.error(str(e))
+        st.error(str(exc))
+        st.stop()
+
+
+    st.session_state["raw_dataset"] = df
+
+    st.session_state["dataset_filename"] = (
+        uploaded_file.name
+    )
+
+    st.session_state["column_mapping"] = {
+        "dataset_format": dataset_type,
+        "transaction_col": transaction_col,
+        "item_col": item_col,
+        "basket_item_cols": (
+            basket_item_cols
+            if dataset_type == "basket"
+            else None
+        ),
+    }
+
+    st.session_state["upload_response"] = (
+        upload_response
+    )
+
+    # Old analysis results are no longer valid.
+    st.session_state.pop(
+        "analysis",
+        None,
+    )
+
+    st.session_state.pop(
+        "analysis_config",
+        None,
+    )
+
+    st.success(
+        "Dataset connected to the MaBaN API."
+    )
+
+    with st.expander(
+        "API upload response"
+    ):
+        st.json(upload_response)
