@@ -3,6 +3,15 @@ import streamlit as st
 
 from bootstrap import PROJECT_ROOT
 
+from styles import apply_styles
+
+apply_styles()
+
+st.set_page_config(
+    page_title="MaBaN - Rules",
+    page_icon="📊",
+    layout="wide",
+)
 
 st.title("Association Rules")
 

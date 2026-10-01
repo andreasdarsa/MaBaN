@@ -6,7 +6,13 @@ from api_client import (
     APIClientError,
     get_api_client,
 )
+from styles import apply_styles
 
+st.set_page_config(
+    page_title="MaBaN - Upload dataset",
+    page_icon="📊",
+    layout="wide",
+)
 
 st.title("Upload Dataset")
 
@@ -14,6 +20,7 @@ st.write(
     "Upload a CSV transaction dataset and configure its structure."
 )
 
+apply_styles()
 
 uploaded_file = st.file_uploader(
     "Upload CSV file",

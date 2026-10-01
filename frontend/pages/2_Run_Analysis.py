@@ -10,7 +10,15 @@ from api_client import (
     APIClientError,
     get_api_client,
 )
+from styles import apply_styles
 
+apply_styles()
+
+st.set_page_config(
+    page_title="MaBaN - Analysis",
+    page_icon="📊",
+    layout="wide",
+)
 
 st.title("Run Analysis")
 

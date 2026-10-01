@@ -5,6 +5,7 @@ from api_client import (
     APIClientError,
     get_api_client,
 )
+from styles import apply_styles
 
 
 st.set_page_config(
@@ -13,6 +14,7 @@ st.set_page_config(
     layout="wide",
 )
 
+apply_styles()
 
 st.title("MaBaN")
 st.subheader("Market Basket Analysis")
