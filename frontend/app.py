@@ -1,64 +1,46 @@
 import streamlit as st
 
-from bootstrap import PROJECT_ROOT
-from api_client import (
-    APIClientError,
-    get_api_client,
-)
+from api_client import APIClientError, get_api_client
 from styles import apply_styles
 
-
-st.set_page_config(
-    page_title="MaBaN",
-    page_icon="📊",
-    layout="wide",
-)
-
+st.set_page_config(page_title="MaBaN", page_icon="🛒", layout="wide")
 apply_styles()
 
+st.markdown('<div class="maban-kicker">MARKET BASKET ANALYSIS</div>', unsafe_allow_html=True)
 st.title("MaBaN")
-st.subheader("Market Basket Analysis")
-
-st.write(
-    "Discover product relationships, purchasing patterns, "
-    "recommendations, and actionable business insights."
-)
-
-
-st.divider()
-
-
-st.markdown("### Workflow")
-
 st.markdown(
-    """
-    1. Upload your transaction dataset
-    2. Configure the dataset structure
-    3. Run the market basket analysis
-    4. Explore rules, itemsets, and recommendations
-    """
+    '<div class="maban-subtitle">Discover product relationships, purchasing patterns, recommendations, and actionable insights.</div>',
+    unsafe_allow_html=True,
 )
-
-
-st.divider()
-
-
-client = get_api_client()
-
+st.markdown("")
 
 try:
-    health = client.health()
-
-    st.success(
-        f"Backend connected — "
-        f"{health.get('service', 'MaBaN API')}"
+    health = get_api_client().health()
+    st.markdown(
+        '<div class="maban-card maban-card-accent-green"><strong>API connected</strong><br>'
+        '<span class="maban-subtitle">MaBaN API is ready for analysis.</span></div>',
+        unsafe_allow_html=True,
     )
-
 except APIClientError as exc:
-
-    st.warning(str(exc))
-
-    st.caption(
-        "Start the FastAPI backend before running an analysis. "
-        "Default API URL: http://localhost:8000/api/v1"
+    st.markdown(
+        '<div class="maban-card maban-card-accent-red"><strong>Backend offline</strong><br>'
+        f'<span class="maban-subtitle">{exc}</span></div>',
+        unsafe_allow_html=True,
     )
+
+st.markdown("### Workflow")
+cols = st.columns(4)
+steps = [
+    ("01", "Upload", "Connect a CSV dataset."),
+    ("02", "Configure", "Map the transaction structure."),
+    ("03", "Analyze", "Mine itemsets and association rules."),
+    ("04", "Recommend", "Turn rules into product suggestions."),
+]
+for col, (number, title, desc) in zip(cols, steps):
+    with col:
+        st.markdown(
+            f'<div class="maban-card"><div class="maban-kicker">{number}</div>'
+            f'<div style="font-size:1.05rem;font-weight:750;margin:.35rem 0">{title}</div>'
+            f'<div class="maban-subtitle">{desc}</div></div>',
+            unsafe_allow_html=True,
+        )
