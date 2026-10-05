@@ -36,9 +36,24 @@ def build_transactions(df: pd.DataFrame, config: dict[str, Any]) -> list[dict[st
     return transactions
 
 
+def format_rule_part(values: object) -> str:
+    if isinstance(values, str):
+        return values
+
+    return ", ".join(
+        sorted(str(item) for item in values)
+    )
+
+
 def rule_text(row: dict[str, Any]) -> str:
-    left = ", ".join(sorted(map(str, row.get("antecedents", []))))
-    right = ", ".join(sorted(map(str, row.get("consequents", []))))
+    left = format_rule_part(
+        row.get("antecedents", [])
+    )
+
+    right = format_rule_part(
+        row.get("consequents", [])
+    )
+
     return f"{left} → {right}"
 
 if "raw_dataset" not in st.session_state or "column_mapping" not in st.session_state:

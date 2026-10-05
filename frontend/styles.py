@@ -92,12 +92,12 @@ def apply_styles() -> None:
 
             [data-testid="stMainBlockContainer"] {{
                 max-width: 1400px;
-                padding-top: 2rem;
+                padding-top: 4rem;
                 padding-bottom: 3rem;
             }}
 
             [data-testid="stHeader"] {{
-                background: rgba(8, 17, 23, 0.88);
+                background: transparent;
             }}
 
             [data-testid="stSidebar"] {{
@@ -444,6 +444,13 @@ def apply_styles() -> None:
             .maban-subtitle {{
                 color: var(--maban-text-muted);
                 font-size: 0.98rem;
+            }}
+
+            .maban-recommendation .item {{
+                color: #F8FAFC;
+                font-size: 1.15rem;
+                font-weight: 800 !important;
+                letter-spacing: -0.01em;
             }}
         </style>
         """,
