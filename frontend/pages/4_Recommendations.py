@@ -41,19 +41,52 @@ if not basket:
     st.markdown('<div class="maban-card maban-card-accent-yellow"><strong>Select at least one item.</strong><br><span class="maban-subtitle">MaBaN will find rules whose antecedents match the basket.</span></div>', unsafe_allow_html=True)
     st.stop()
 
-if st.button("Generate Recommendations", type="primary", use_container_width=True):
+if st.button(
+    "Generate Recommendations",
+    type="primary",
+    use_container_width=True,
+):
+
+    recommendation_rules = []
+
+    for _, row in rules.iterrows():
+        antecedents = row["antecedents"]
+        consequents = row["consequents"]
+
+        if isinstance(antecedents, str):
+            antecedents = [antecedents]
+
+        if isinstance(consequents, str):
+            consequents = [consequents]
+
+        recommendation_rules.append(
+            {
+                "antecedents": [
+                    str(item) for item in antecedents
+                ],
+                "consequents": [
+                    str(item) for item in consequents
+                ],
+                "support": float(row["support"]),
+                "confidence": float(row["confidence"]),
+                "lift": float(row["lift"]),
+            }
+        )
+
     payload = {
-        "rules": rules.to_dict(orient="records"),
-        "basket": basket,
-        "top_n": top_n,
-        "ranking_metric": ranking_metric,
+        "rules": recommendation_rules,
+        "basket": [str(item) for item in basket],
+        "top_n": int(top_n),
+        "ranking_metric": str(ranking_metric),
     }
+
     with st.spinner("Ranking recommendations..."):
         try:
             result = get_api_client().recommend(payload)
         except APIClientError as exc:
             st.error(str(exc))
             st.stop()
+
     st.session_state["recommendations"] = result
 
 result = st.session_state.get("recommendations")

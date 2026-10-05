@@ -39,9 +39,15 @@ class MaBaNAPIClient:
                 timeout=self.timeout,
                 **kwargs,
             )
+        except requests.exceptions.InvalidJSONError as exc:
+            raise APIClientError(
+                f"Could not encode request payload as JSON: {exc}"
+            ) from exc
+
         except requests.RequestException as exc:
             raise APIClientError(
-                f"Could not reach MaBaN API at {self.base_url}."
+                f"Could not reach MaBaN API at {self.base_url}: "
+                f"{type(exc).__name__}: {exc}"
             ) from exc
 
         try:
